@@ -2,9 +2,11 @@
 #ifndef _MODULE_EXERCICE_H_
 #define _MODULE_EXERCICE_H_
 
-#include "Module.h"
 #include "Globals.h"
+#include "Module.h"
+#include "Model.h"
 
+class Model;
 
 class ModuleExercice : public Module
 {
@@ -22,5 +24,6 @@ public:
 private:
 	unsigned vbo_id = 0;
 	unsigned texture = 0;
+	Model model;
 };
 #endif /*_MODULE_EXERCICE_H_*/

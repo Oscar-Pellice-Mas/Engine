@@ -28,8 +28,10 @@ void DestroyVBO(unsigned vbo);
 // Called before render is available
 bool ModuleExercice::Init()
 {
-	vbo_id = CreateTriangleVBO();
-	texture = App->GetTexture()->LoadTexture("Baboon.ppm");
+	//vbo_id = CreateTriangleVBO();
+	//texture = App->GetTexture()->LoadTexture("Baboon.ppm");
+
+	model.Load("BackerHouse.gltf");
 
 	return true;
 }
@@ -47,7 +49,14 @@ update_status ModuleExercice::Update()
 		App->GetCamera()->frustum->ProjectionMatrix(), 
 		App->GetOpenGL()->getWidth(), 
 		App->GetOpenGL()->getHeight());
-	RenderVBO(vbo_id, App->GetProgram()->program, texture);
+	
+	//RenderVBO(vbo_id, App->GetProgram()->program, texture);
+	unsigned program = App->GetProgram()->program;
+	float4x4 modelMatrix = float4x4::FromTRS(float3(0.0f, 0.0f, 0.0f), float4x4::RotateZ(0.0f), float3(40.0f, 40.0f, 40.0f));
+
+	glUseProgram(program);
+	glUniformMatrix4fv(0, 1, GL_TRUE, &modelMatrix[0][0]);
+	model.Update();
 
 	return UPDATE_CONTINUE;
 }
