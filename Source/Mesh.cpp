@@ -142,7 +142,7 @@ void Mesh::Draw(const std::vector<unsigned>& textures)
 	glUseProgram(program);
 
 	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, textures[materialCount]);
+	glBindTexture(GL_TEXTURE_2D, textures[material]);
 	glUniform1i(glGetUniformLocation(program, "diffuse"), 0);
 
 	glBindVertexArray(vao);

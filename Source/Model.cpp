@@ -1,5 +1,12 @@
 #include "Model.h"
 
+#include "Application.h"
+#include "ModuleTexture.h"
+#include "Mesh.h"
+
+#define TINYGLTF_NO_STB_IMAGE_WRITE
+#define TINYGLTF_NO_STB_IMAGE
+#define TINYGLTF_NO_EXTERNAL_IMAGE
 #define TINYGLTF_IMPLEMENTATION /* Only in one of the includes */
 #include "tiny_gltf.h"
 
@@ -8,7 +15,6 @@ Model::Model()
 
 }
 
-// Destructor
 Model::~Model()
 {
 }
@@ -30,12 +36,16 @@ void Model::Load(const char* assetFileName)
 		LOG("Error loading %s: %s", assetFileName, error.c_str());
 	}
 	
+	LoadMaterials(srcModel);
 	for (const auto& srcMesh : srcModel.meshes)
 	{
 		for (const auto& primitive : srcMesh.primitives)
 		{
 			Mesh* mesh = new Mesh;
 			mesh->LoadVBO(srcModel, srcMesh, primitive);
+			mesh->LoadEBO(srcModel, srcMesh, primitive);
+			mesh->CreateVAO();
+			mesh->SetMaterial(primitive.material);
 			meshes.push_back(mesh);
 		}
 	}
