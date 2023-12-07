@@ -24,6 +24,6 @@ public:
 private:
 	unsigned vbo_id = 0;
 	unsigned texture = 0;
-	Model model;
+	Model* model;
 };
 #endif /*_MODULE_EXERCICE_H_*/

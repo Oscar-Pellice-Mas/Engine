@@ -34,14 +34,12 @@ bool ModuleProgram::Init()
 
 update_status ModuleProgram::PreUpdate()
 {
-
 	return UPDATE_CONTINUE;
 }
 
 // Called every draw update
 update_status ModuleProgram::Update()
 {
-
 	return UPDATE_CONTINUE;
 }
 

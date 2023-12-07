@@ -31,8 +31,8 @@ bool ModuleOpenGL::Init()
 
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
-	this->context = SDL_GL_CreateContext(App->GetWindow()->window);
-	if (!this->context) {
+	context = SDL_GL_CreateContext(App->GetWindow()->GetWindow());
+	if (!context) {
 		// Handle error
 		LOG("Error creating OpenGL context: %s", SDL_GetError());
 		return false;
@@ -66,7 +66,7 @@ bool ModuleOpenGL::Init()
 
 update_status ModuleOpenGL::PreUpdate()
 {
-	SDL_GetWindowSize(App->GetWindow()->window, &w,	&h);
+	SDL_GetWindowSize(App->GetWindow()->GetWindow(), &w,	&h);
 	glViewport(0, 0, w, h);
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -84,7 +84,7 @@ update_status ModuleOpenGL::Update()
 
 update_status ModuleOpenGL::PostUpdate()
 {
-	SDL_GL_SwapWindow(App->GetWindow()->window);
+	SDL_GL_SwapWindow(App->GetWindow()->GetWindow());
 	return UPDATE_CONTINUE;
 }
 
@@ -94,15 +94,15 @@ bool ModuleOpenGL::CleanUp()
 	LOG("Destroying renderer");
 
 	//Destroy window
-	SDL_GL_DeleteContext(this->context);
+	SDL_GL_DeleteContext(context);
 
 	return true;
 }
 
 void ModuleOpenGL::WindowResized(unsigned width, unsigned height)
 {
-	this->w = width;
-	this->h = height;
+	w = width;
+	h = height;
 }
 
 void __stdcall OurOpenGLErrorFunction(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)

@@ -54,9 +54,9 @@ update_status ModuleCamera::PreUpdate()
     float4x4 view = frustum->ViewMatrix();
 	//view = float4x4::LookAt(float3(0.0f, 4.0f, 8.0f), float3(0.0f, 0.0f, 0.0f), float3::unitY, frustum.up);
 
-	glUniformMatrix4fv(0, 1, GL_TRUE, &model[0][0]);
-	glUniformMatrix4fv(1, 1, GL_TRUE, &view[0][0]);
-	glUniformMatrix4fv(2, 1, GL_TRUE, &proj[0][0]);
+	//glUniformMatrix4fv(0, 1, GL_TRUE, &model[0][0]);
+	//glUniformMatrix4fv(1, 1, GL_TRUE, &view[0][0]);
+	//glUniformMatrix4fv(2, 1, GL_TRUE, &proj[0][0]);
 
 	return UPDATE_CONTINUE;
 }

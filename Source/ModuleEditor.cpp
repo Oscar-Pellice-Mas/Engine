@@ -45,7 +45,7 @@ bool ModuleEditor::Init()
     }
 
     // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForOpenGL(App->GetWindow()->window, App->GetOpenGL()->context);
+    ImGui_ImplSDL2_InitForOpenGL(App->GetWindow()->GetWindow(), App->GetOpenGL()->context);
     ImGui_ImplOpenGL3_Init("#version 130");
 
 	return true;

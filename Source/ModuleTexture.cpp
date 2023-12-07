@@ -113,7 +113,7 @@ bool ModuleTexture::LoadTextureData(const std::string& fileDir) {
 }
 
 bool ModuleTexture::LoadTexture(const std::string& fileDir) {
-    bool loaded = LoadTextureData("Textures/" + fileDir);
+    bool loaded = LoadTextureData(fileDir);
 
     if (!loaded) return false;
 

@@ -3,6 +3,7 @@
 #include "Application.h"
 #include "ModuleTexture.h"
 #include "Mesh.h"
+#include <.\GL\glew.h>
 
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_STB_IMAGE
@@ -17,6 +18,11 @@ Model::Model()
 
 Model::~Model()
 {
+	for (int i = 0; i < meshes.size(); i++) delete meshes[i];
+	meshes.clear();
+
+	for (int i = 0; i < textures.size(); i++) glDeleteTextures(1, &textures[i]);
+	textures.clear();
 }
 
 void Model::Update() {
@@ -34,6 +40,7 @@ void Model::Load(const char* assetFileName)
 	if (!loadOk)
 	{
 		LOG("Error loading %s: %s", assetFileName, error.c_str());
+		return;
 	}
 	
 	LoadMaterials(srcModel);
@@ -42,10 +49,10 @@ void Model::Load(const char* assetFileName)
 		for (const auto& primitive : srcMesh.primitives)
 		{
 			Mesh* mesh = new Mesh;
+			mesh->SetMaterial(primitive.material);
 			mesh->LoadVBO(srcModel, srcMesh, primitive);
 			mesh->LoadEBO(srcModel, srcMesh, primitive);
 			mesh->CreateVAO();
-			mesh->SetMaterial(primitive.material);
 			meshes.push_back(mesh);
 		}
 	}

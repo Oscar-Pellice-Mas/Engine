@@ -7,6 +7,7 @@
 #include "ModuleDebugDraw.h"
 #include "ModuleTexture.h"
 #include "ModuleProgram.h"
+#include "ModuleWindow.h"
 
 #include "SDL.h"
 #include <GL/glew.h>
@@ -14,24 +15,29 @@
 
 ModuleExercice::ModuleExercice()
 {
+	model = new Model();
 
 }
 
 ModuleExercice::~ModuleExercice()
 {
+	delete model;
 }
 
-unsigned CreateTriangleVBO();
-void RenderVBO(unsigned vbo, unsigned program, unsigned texture);
-void DestroyVBO(unsigned vbo);
+
 
 // Called before render is available
 bool ModuleExercice::Init()
 {
 	//vbo_id = CreateTriangleVBO();
-	//texture = App->GetTexture()->LoadTexture("Baboon.ppm");
+	//texture = App->GetTexture()->LoadTexture("Textures/Baboon.ppm");
+	
+	unsigned program = App->GetProgram()->program;
+	glUseProgram(program);
 
-	model.Load("BackerHouse.gltf");
+
+
+	model->Load("Models/BakerHouse/BakerHouse.gltf");
 
 	return true;
 }
@@ -45,18 +51,20 @@ update_status ModuleExercice::PreUpdate()
 // Called every draw update
 update_status ModuleExercice::Update()
 {
-	App->GetDebugDraw()->Draw(App->GetCamera()->frustum->ViewMatrix(), 
-		App->GetCamera()->frustum->ProjectionMatrix(), 
-		App->GetOpenGL()->getWidth(), 
-		App->GetOpenGL()->getHeight());
-	
-	//RenderVBO(vbo_id, App->GetProgram()->program, texture);
-	unsigned program = App->GetProgram()->program;
-	float4x4 modelMatrix = float4x4::FromTRS(float3(0.0f, 0.0f, 0.0f), float4x4::RotateZ(0.0f), float3(40.0f, 40.0f, 40.0f));
+	float4x4 model_matrix, view_matrix, proj_matrix;
+	//model_matrix = float4x4::FromTRS(float3::zero, float4x4::RotateZ(0), float3::one);
+	model_matrix = float4x4::FromTRS(float3::zero, float4x4::RotateZ(0), float3(40,40,40));
+	view_matrix = App->GetCamera()->frustum->ViewMatrix();
+	proj_matrix = App->GetCamera()->frustum->ProjectionMatrix();
 
-	glUseProgram(program);
-	glUniformMatrix4fv(0, 1, GL_TRUE, &modelMatrix[0][0]);
-	model.Update();
+	App->GetDebugDraw()->Draw(view_matrix, proj_matrix, App->GetWindow()->GetScreenHeight(), App->GetWindow()->GetScreenWidth());
+
+	glUseProgram(App->GetProgram()->program);
+	glUniformMatrix4fv(0, 1, GL_TRUE, &model_matrix[0][0]);
+	glUniformMatrix4fv(1, 1, GL_TRUE, &view_matrix[0][0]);
+	glUniformMatrix4fv(2, 1, GL_TRUE, &proj_matrix[0][0]);
+	
+	model->Update();
 
 	return UPDATE_CONTINUE;
 }
@@ -70,11 +78,15 @@ update_status ModuleExercice::PostUpdate()
 // Called before quitting
 bool ModuleExercice::CleanUp()
 {
-	DestroyVBO(vbo_id);
-
 	return true;
 }
 
+
+
+/*
+unsigned CreateTriangleVBO();
+void RenderVBO(unsigned vbo, unsigned program, unsigned texture);
+void DestroyVBO(unsigned vbo);
 // This function must be called one time at creation of vertex buffer
 unsigned CreateTriangleVBO()
 {
@@ -136,4 +148,4 @@ void DestroyVBO(unsigned vbo)
 {
 	glDeleteBuffers(1, &vbo);
 }
-
+*/
