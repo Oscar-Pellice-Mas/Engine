@@ -21,7 +21,7 @@ public:
 	update_status PostUpdate();
 	bool CleanUp();
 
-	void AddLog(char str[]);
+	void AddLog(const char* str);
 
 private:
 	bool ShowMainMenu(bool& show_main_menu);

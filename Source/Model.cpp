@@ -14,83 +14,106 @@
 
 Model::Model()
 {
-	srcModel = new tinygltf::Model;
+	model = new tinygltf::Model;
 }
 
 Model::~Model()
 {
-	for (int i = 0; i < meshes.size(); i++) delete meshes[i];
+	// Clean up meshes
+	for (Mesh* mesh : meshes)
+	{
+		mesh->DestroyBuffers();
+		delete mesh;
+	}
 	meshes.clear();
 
-	for (int i = 0; i < textures.size(); i++) glDeleteTextures(1, &textures[i]);
+	// Delete textures
+	for (unsigned int texture : textures)
+	{
+		glDeleteTextures(1, &texture);
+	}
 	textures.clear();
+	
+	// Delete scratch images
+	for (DirectX::ScratchImage* image : images)
+	{
+		delete image;
+	}
+	images.clear();
+
+	// Delete the source model
+	delete model;
 }
 
-void Model::Update() {
-	for (int i = 0; i < meshes.size(); ++i) {
-		meshes[i]->Draw(textures);
+void Model::Update() 
+{
+	// Draw all meshes
+	for (Mesh* mesh : meshes)
+	{
+		mesh->Draw(textures);
 	}
 }
-
-
 
 void Model::Load(const char* assetFileName)
 {
-	std::string filePath = "";
-	filePath = assetFileName;
-	size_t pos = filePath.rfind('/');
-	if (pos != std::string::npos) {
+	std::string filePath = assetFileName;
+	size_t pos = filePath.find_last_of('/');
+	if (pos != std::string::npos) 
+	{
 		name = filePath.substr(pos + 1);
 		filePath.erase(pos + 1, filePath.size() - 1);
 	}
-	else {
-		pos = filePath.rfind('\\');
-		if (pos != std::string::npos) {
+	else 
+	{
+		pos = filePath.find_last_of('\\');
+		if (pos != std::string::npos) 
+		{
 			name = filePath.substr(pos + 1);
 			filePath.erase(pos + 1, filePath.size() - 1);
 		}
 	}
 
+	// Load glTF model
 	tinygltf::TinyGLTF gltfContext;
 	std::string error, warning;
-	bool loadOk = gltfContext.LoadASCIIFromFile(srcModel, &error, &warning, assetFileName);
+	bool loadOk = gltfContext.LoadASCIIFromFile(model, &error, &warning, assetFileName);
 	if (!loadOk)
 	{
 		LOG("Error loading %s: %s", assetFileName, error.c_str());
 		return;
 	}
 	
-	LoadMaterials(*srcModel, filePath);
-	for (const auto& srcMesh : srcModel->meshes)
+	LoadMaterials(*model, filePath);
+	for (const auto& mesh : model->meshes)
 	{
-		for (const auto& primitive : srcMesh.primitives)
+		for (const auto& primitive : mesh.primitives)
 		{
-			Mesh* mesh = new Mesh;
-			mesh->SetMaterial(primitive.material);
-			mesh->LoadVBO(*srcModel, srcMesh, primitive);
-			mesh->LoadEBO(*srcModel, srcMesh, primitive);
-			mesh->CreateVAO();
-			meshes.push_back(mesh);
+			Mesh* aux = new Mesh;
+			aux->SetMaterial(primitive.material);
+			aux->LoadVBO(*model, mesh, primitive);
+			aux->LoadEBO(*model, mesh, primitive);
+			aux->CreateVAO();
+			meshes.push_back(aux);
 		}
 	}
 }
 
-void Model::LoadMaterials(const tinygltf::Model& srcModel, std::string filePath)
+void Model::LoadMaterials(const tinygltf::Model& model, std::string filePath)
 {
-	for (const auto& srcMaterial : srcModel.materials)
+	for (const auto& srcMaterial : model.materials)
 	{
 		unsigned int textureId = 0;
 		if (srcMaterial.pbrMetallicRoughness.baseColorTexture.index >= 0)
 		{
-			const tinygltf::Texture& texture = srcModel.textures[srcMaterial.pbrMetallicRoughness.baseColorTexture.index];
-			const tinygltf::Image& image = srcModel.images[texture.source];
+			const tinygltf::Texture& texture = model.textures[srcMaterial.pbrMetallicRoughness.baseColorTexture.index];
+			const tinygltf::Image& image = model.images[texture.source];
 
 			std::string path = filePath + image.uri;
-
 			DirectX::ScratchImage* scrImage = new DirectX::ScratchImage();
+
 			App->GetTexture()->LoadTextureData(*scrImage, path);
 			textureId = App->GetTexture()->LoadTexture(scrImage);
-			scrImages.push_back(scrImage);
+			images.push_back(scrImage);
 		}
 		textures.push_back(textureId);
 	}
@@ -98,20 +121,29 @@ void Model::LoadMaterials(const tinygltf::Model& srcModel, std::string filePath)
 
 void Model::Clear() {
 
-	for (int i = 0; i < textures.size(); i++) glDeleteTextures(1, &textures[i]);
+	// Delete textures
+	for (unsigned int texture : textures)
+	{
+		glDeleteTextures(1, &texture);
+	}
 	textures.clear();
 
-	delete srcModel;
-	srcModel = new tinygltf::Model();
-
-	for (int i = 0; i < scrImages.size(); i++) {
-		delete scrImages[i];
+	// Delete scratch images
+	for (DirectX::ScratchImage* image : images)
+	{
+		delete image;
 	}
-	scrImages.clear();
+	images.clear();
 
-	for (int i = 0; i < meshes.size(); i++) {
-		meshes[i]->DestroyBuffers();
-		delete meshes[i];
+	// Clean up meshes
+	for (Mesh* mesh : meshes)
+	{
+		mesh->DestroyBuffers();
+		delete mesh;
 	}
 	meshes.clear();
+
+	// Delete the source model
+	delete model;
+	model = new tinygltf::Model();
 }

@@ -132,28 +132,28 @@ bool ModuleEditor::ShowMainMenu(bool& show_main_menu)
 		}
 		if (ImGui::BeginMenu("Logs")) 
 		{
-			if (show_logs) {
-				ImGui::OpenPopup("Logs");
-			}
+			if (show_logs)
+			{
+				// Open the Logs window when show_logs is true
+				ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+				ImGui::Begin("Logs", &show_logs);
 
-			if (ImGui::BeginPopup("Logs")) {
-				
+				// Logs content
 				ImGui::Separator();
-
-				ImGui::BeginChild("##ConsolePanel", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), true, ImGuiWindowFlags_HorizontalScrollbar);
 				ImGui::TextUnformatted(logs->begin(), logs->end());
 
+				// Ensure the logs window is scrolled to the bottom
 				if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
 					ImGui::SetScrollHereY(1.0f);
 
-				ImGui::EndChild();
-
-				if (ImGui::Button("CLOSE", ImVec2(200, 0))) {
-					ImGui::CloseCurrentPopup();
+				// Close button to hide logs
+				if (ImGui::Button("CLOSE"))
+				{
 					show_logs = false;
+					ImGui::End();
 				}
 
-				ImGui::EndPopup();
+				ImGui::End();
 			}
 
 			ImGui::EndMenu();
@@ -215,6 +215,7 @@ void ModuleEditor::ShowMovementHelp()
 	ImGui::Text("Q / E: Move up / down");
 	ImGui::Text("Arrow Keys: Rotate camera");
 	ImGui::Text("Right Mouse Button: Drag to rotate camera");
+	ImGui::Text("Hold F: Activate Focus mode. Mouse motion follows orbital.");
 	ImGui::Text("Hold Shift: Increase movement speed");
 	ImGui::Text("Hold Ctrl: Decrease movement speed");
 	ImGui::Text("Scroll Wheel: Zoom in / out");
@@ -222,21 +223,26 @@ void ModuleEditor::ShowMovementHelp()
 
 void ModuleEditor::ShowHardware()
 {
-	GLfloat total_vram, available_vram, usage;
-	glGetFloatv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total_vram);
-	glGetFloatv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &available_vram);
+	GLfloat total_ram, available_ram;
+	glGetFloatv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &total_ram);
+	glGetFloatv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &available_ram);
 
-	usage = (total_vram - available_vram) / total_vram;
+	// Additional Information
+	ImGui::Text("Number of CPU Cores: %i", SDL_GetCPUCount());
 
+	// Memory Information
+	ImGui::Text("Total RAM: %.1fGB", total_ram * 1.0f);
+	ImGui::Text("Available Physical Memory: %.1fGB", SDL_GetSystemRAM() * 1.0f);
+	ImGui::Text("Memory Usage: %.2f%%", (total_ram - available_ram) / total_ram * 100.0f);
 	ImGui::Separator();
-	ImGui::Text("CPUs: %i (Cache: %.1fkb)", SDL_GetCPUCount(), SDL_GetCPUCacheLineSize());
-	ImGui::Text("System RAM: %.1fGB ", SDL_GetSystemRAM());
-	ImGui::Separator();
-	ImGui::Text("GPU Vendor: %s", glGetString(GL_VENDOR));
-	ImGui::Text("GPU Brand: %s", glGetString(GL_RENDERER));
-	ImGui::Text("VRAM Budget: %.1fMB", (total_vram / 1024.0f));
-	ImGui::Text("VRAM Usage: %.2f%%", usage * 100.0f);
-	ImGui::Text("VRAM Available: %.2fMB", available_vram / 1024);
+
+	// GPU Information
+	const char* gpuVendor = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
+	const char* gpuRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+
+	ImGui::Text("GPU Vendor: %s", gpuVendor);
+	ImGui::Text("GPU Renderer: %s", gpuRenderer);
+
 }
 
 void ModuleEditor::ShowSoftware()
@@ -272,18 +278,18 @@ void ModuleEditor::ShowProperties()
 	{
 
 		const tinygltf::Model* model = App->GetExercice()->GetModel()->GetSrcModel();
-		std::vector<DirectX::ScratchImage*> scrImages = App->GetExercice()->GetModel()->GetScrImages();
+		std::vector<DirectX::ScratchImage*> images = App->GetExercice()->GetModel()->GetScrImages();
 
-		if (!scrImages.empty()) {
-			for (int i = 0; i < scrImages.size(); i++) {
+		if (!images.empty()) {
+			for (int i = 0; i < images.size(); i++) {
 				ImGui::Separator();
-				int imageSize = scrImages[i]->GetMetadata().width * scrImages[i]->GetMetadata().height * 
-					DirectX::BitsPerPixel(scrImages[i]->GetMetadata().format) / 8000000;
+				int imageSize = images[i]->GetMetadata().width * images[i]->GetMetadata().height * 
+					DirectX::BitsPerPixel(images[i]->GetMetadata().format) / 8000000;
 				
 				ImGui::Text("Size: %i MB", imageSize);
-				ImGui::Text("Width: %i", scrImages[i]->GetMetadata().width);
+				ImGui::Text("Width: %i", images[i]->GetMetadata().width);
 				ImGui::SameLine();
-				ImGui::Text("Height: %i", scrImages[i]->GetMetadata().height);
+				ImGui::Text("Height: %i", images[i]->GetMetadata().height);
 				
 			}
 		}
@@ -369,7 +375,7 @@ void ModuleEditor::ShowAbout()
 	ImGui::Text("License: MIT");
 }
 
-void ModuleEditor::AddLog(char str[]) 
+void ModuleEditor::AddLog(const char* str)
 { 
 	if (logs!= nullptr) logs->appendf(str); 
 }

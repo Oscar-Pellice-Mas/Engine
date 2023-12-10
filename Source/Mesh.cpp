@@ -11,7 +11,7 @@
 
 Mesh::Mesh()
 {
-	meshAABB = new AABB();
+	aabb = new AABB();
 
 }
 
@@ -22,15 +22,15 @@ Mesh::~Mesh()
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
 	glDeleteVertexArrays(1, &vao);
-	delete meshAABB;
+	delete aabb;
 }
 
 void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive)
 {
-	name = mesh.name;
 	// Initialize variables for vertex buffer size and offsets
 	size_t bufferSize = 0;
 	size_t posByteOffset = 0, posByteStride = 0, texByteOffset = 0, texByteStride = 0;
+	name = mesh.name;
 
 	// Check if POSITION, TEXCOORD_0, and NORMAL attributes exist in the primitive
 	const auto& itPosition = primitive.attributes.find("POSITION");
@@ -38,15 +38,12 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 	const auto& itNormal = primitive.attributes.find("NORMAL");
 
 	// Calculate the size of the vertex buffer based on the attributes
-	if (itPosition != primitive.attributes.end()) {
+	if (itPosition != primitive.attributes.end())
 		bufferSize += sizeof(float) * 3;
-	}
-	if (itTexture != primitive.attributes.end()) {
+	if (itTexture != primitive.attributes.end())
 		bufferSize += sizeof(float) * 2;
-	}
-	if (itNormal != primitive.attributes.end()) {
+	if (itNormal != primitive.attributes.end())
 		bufferSize += sizeof(float) * 3;
-	}
 
 	// Handle POSITION attribute
 	if (itPosition != primitive.attributes.end())
@@ -74,19 +71,14 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 		// Map the buffer and copy data from the glTF model
 		float3* ptr = reinterpret_cast<float3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 
-		for (size_t i = 0; i < posAcc.count; i++) {
+		for (size_t i = 0; i < posAcc.count; i++)
+		{
 			ptr[i] = *reinterpret_cast<const float3*>(bufferPos);
-			if (posView.byteStride != 0) {
-				bufferPos += posView.byteStride;
-			}
-			else {
-				bufferPos += sizeof(float) * 3;
-			}
-
+			bufferPos += (posView.byteStride != 0) ? posView.byteStride : sizeof(float) * 3;
 		}
 
-		meshAABB->SetFrom(ptr, vertexCount);
-		Sphere sphere = meshAABB->MinimalEnclosingSphere();
+		aabb->SetFrom(ptr, vertexCount);
+		Sphere sphere = aabb->MinimalEnclosingSphere();
 		Frustum* frustum = App->GetCamera()->frustum;
 		float3 pos = sphere.Centroid() + float3(sphere.Diameter());
 		App->GetCamera()->SetPosition(pos);
@@ -97,10 +89,13 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 	}
 
 	// Handle TEXCOORD_0 attribute
-	if (itTexture != primitive.attributes.end()) {
+	if (itTexture != primitive.attributes.end()) 
+	{
 		const tinygltf::Accessor& texCoordAcc = model.accessors[itTexture->second];
+
 		SDL_assert(texCoordAcc.type == TINYGLTF_TYPE_VEC2);
 		SDL_assert(texCoordAcc.componentType == GL_FLOAT);
+
 		const tinygltf::BufferView& texCoordView = model.bufferViews[texCoordAcc.bufferView];
 		const tinygltf::Buffer& texCoordBuffer = model.buffers[texCoordView.buffer];
 		const unsigned char* bufferTexCoord = &(texCoordBuffer.data[texCoordAcc.byteOffset + texCoordView.byteOffset]);
@@ -110,16 +105,12 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 
 		float2* ptr = reinterpret_cast<float2*>(reinterpret_cast<char*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)) + sizeof(float) * 3 * vertexCount);
 
-		for (size_t i = 0; i < texCoordAcc.count; i++) {
+		for (size_t i = 0; i < texCoordAcc.count; i++)
+		{
 			ptr[i] = *reinterpret_cast<const float2*>(bufferTexCoord);
-			if (texCoordView.byteStride != 0) {
-				bufferTexCoord += texCoordView.byteStride;
-			}
-			else {
-				bufferTexCoord += sizeof(float) * 2;
-			}
-
+			bufferTexCoord += (texCoordView.byteStride != 0) ? texCoordView.byteStride : sizeof(float) * 2;
 		}
+
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 
 	}
@@ -134,23 +125,20 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 		const unsigned char* bufferNormal = &(normalBuffer.data[normalAcc.byteOffset + normalView.byteOffset]);
 
 		float3* ptr = nullptr;
-		if (itTexture != primitive.attributes.end()) {
-			ptr = reinterpret_cast<float3*>(reinterpret_cast<char*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)) + sizeof(float) * 5 * vertexCount);
-		}
-		else {
-			ptr = reinterpret_cast<float3*>(reinterpret_cast<char*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)) + sizeof(float) * 3 * vertexCount);
-		}
+		if (itTexture != primitive.attributes.end())
+			ptr = reinterpret_cast<float3*>(
+				reinterpret_cast<char*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)) + sizeof(float) * 5 * vertexCount);
+		else
+			ptr = reinterpret_cast<float3*>(
+				reinterpret_cast<char*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY)) + sizeof(float) * 3 * vertexCount);
 
-		for (size_t i = 0; i < normalAcc.count; i++) {
+
+		for (size_t i = 0; i < normalAcc.count; i++)
+		{
 			ptr[i] = *reinterpret_cast<const float3*>(bufferNormal);
-			if (normalView.byteStride != 0) {
-				bufferNormal += normalView.byteStride;
-			}
-			else {
-				bufferNormal += sizeof(float) * 3;
-			}
-
+			bufferNormal += (normalView.byteStride != 0) ? normalView.byteStride : sizeof(float) * 3;
 		}
+
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 
 	}
@@ -163,6 +151,7 @@ void Mesh::LoadEBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 		// Extract information from the glTF model
 		const tinygltf::Accessor& indAcc = model.accessors[primitive.indices];
 		indexCount = indAcc.count;
+
 		const tinygltf::BufferView& indView = model.bufferViews[indAcc.bufferView];
 		const unsigned char* buffer = &(model.buffers[indView.buffer].data[indAcc.byteOffset + indView.byteOffset]);
 
@@ -234,9 +223,11 @@ void Mesh::Draw(const std::vector<unsigned>& textures)
 	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
 }
 
-void Mesh::DestroyBuffers() {
+void Mesh::DestroyBuffers() 
+{
 	glDeleteBuffers(1, &vbo);
-	if (indexCount != 0) {
+	if (indexCount != 0) 
+	{
 		glDeleteBuffers(1, &ebo);
 		glDeleteBuffers(1, &vao);
 	}

@@ -20,7 +20,6 @@ public:
 	update_status PostUpdate();
 	bool CleanUp();
 
-
 	void ClearModel();
 	inline const Model* GetModel() const { return model; }
 	void LoadModel(char* file);

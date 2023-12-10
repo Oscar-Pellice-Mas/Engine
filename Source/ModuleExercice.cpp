@@ -17,7 +17,6 @@
 ModuleExercice::ModuleExercice()
 {
 	model = new Model();
-
 }
 
 ModuleExercice::~ModuleExercice()
@@ -25,18 +24,10 @@ ModuleExercice::~ModuleExercice()
 	delete model;
 }
 
-
-
-// Called before render is available
 bool ModuleExercice::Init()
 {
-	//vbo_id = CreateTriangleVBO();
-	//texture = App->GetTexture()->LoadTexture("Textures/Baboon.ppm");
-	
 	unsigned program = App->GetProgram()->program;
 	glUseProgram(program);
-
-
 
 	//model->Load("./Models/Avocado/Avocado.gltf");
 	model->Load("./Models/BakerHouse/BakerHouse.gltf");
@@ -51,7 +42,6 @@ update_status ModuleExercice::PreUpdate()
 	return UPDATE_CONTINUE;
 }
 
-// Called every draw update
 update_status ModuleExercice::Update()
 {
 	float4x4 model_matrix, view_matrix, proj_matrix;
@@ -77,83 +67,17 @@ update_status ModuleExercice::PostUpdate()
 	return UPDATE_CONTINUE;
 }
 
-// Called before quitting
 bool ModuleExercice::CleanUp()
 {
 	return true;
 }
 
-void ModuleExercice::LoadModel(char* file) {
+void ModuleExercice::LoadModel(char* file) 
+{
 	model->Load(file);
 }
 
-void ModuleExercice::ClearModel() {
+void ModuleExercice::ClearModel()
+{
 	model->Clear();
 }
-
-/*
-unsigned CreateTriangleVBO();
-void RenderVBO(unsigned vbo, unsigned program, unsigned texture);
-void DestroyVBO(unsigned vbo);
-// This function must be called one time at creation of vertex buffer
-unsigned CreateTriangleVBO()
-{
-	//float vtx_data[] = { -1.0f, -1.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f };
-	float buffer_data[] = {
-		-1.0f, -1.0f, 0.0f, // v0 pos
-		 1.0f, -1.0f, 0.0f, // v1 pos
-		-1.0f,  1.0f, 0.0f, // v2 pos
-		 -1.0f, 1.0f, 0.0f, // v3 pos
-		 1.0f,  -1.0f, 0.0f, // v4 pos
-		 1.0f,  1.0f, 0.0f, // v5 pos
-
-		 0.0f,  0.0f, // v0 texcoord
-		 1.0f,  0.0f, // v1 texcoord
-		 0.0f,  1.0f, // v2 texcoord
-		 0.0f,  1.0f, // v3 texcoord
-		 1.0f,  0.0f, // v4 texcoord
-		 1.0f,  1.0f  // v5 texcoord
-	};
-
-	unsigned vbo;
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo); // set vbo active 
-
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(vtx_data), vtx_data, GL_STATIC_DRAW);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(buffer_data), buffer_data, GL_STATIC_DRAW);
-
-	return vbo;
-}
-
-// This function must be called each frame for drawing the triangle
-void RenderVBO(unsigned vbo, unsigned program, unsigned texture)
-{
-	if (texture == -1) return;
-
-	glUseProgram(program);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vbo); // set vbo active 
-
-	// Attribute pointer for position (3 floats per vertex)
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	// Attribute pointer for texture coordinates (2 floats per vertex)
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float) * 3 * 3 * 2));
-
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	//glUniform1i(glGetUniformLocation(program, "mytexture"), 0);
-
-
-	// 1 triangle to draw = 3 vertices 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-// This function must be called one time at destruction of vertex buffer
-void DestroyVBO(unsigned vbo)
-{
-	glDeleteBuffers(1, &vbo);
-}
-*/

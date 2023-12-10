@@ -22,7 +22,8 @@ public:
 	void DestroyBuffers();
 
 	void SetMaterial(int id) { material = id; }
-	inline const AABB* GetAABB() const { return meshAABB; }
+
+	inline const AABB* GetAABB() const { return aabb; }
 	inline const int GetIndexCount() const { return indexCount; }
 	inline const int GetVertexCount() const { return vertexCount; }
 	inline const std::string* GetName() const { return &name; }
@@ -36,7 +37,7 @@ private:
 
 	int indexCount = 0;
 	int vertexCount = 0;
-	AABB* meshAABB;
+	AABB* aabb;
 	std::string name = "";
 };
 
