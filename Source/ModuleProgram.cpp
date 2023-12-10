@@ -21,8 +21,8 @@ ModuleProgram::~ModuleProgram()
 // Called before render is available
 bool ModuleProgram::Init()
 {
-	char* vtx_source = LoadShaderSource("../Source/vertex_shader.shader");
-	char* frg_source = LoadShaderSource("../Source/fragment_shader.shader");
+	char* vtx_source = LoadShaderSource("./Shaders/vertex_shader.shader");
+	char* frg_source = LoadShaderSource("./Shaders/fragment_shader.shader");
 
 	unsigned vtx_shader = CompileShader(GL_VERTEX_SHADER, vtx_source);
 	unsigned frg_shader = CompileShader(GL_FRAGMENT_SHADER, frg_source);
