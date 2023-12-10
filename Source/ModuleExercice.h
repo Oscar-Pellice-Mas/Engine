@@ -21,6 +21,10 @@ public:
 	bool CleanUp();
 
 
+	void ClearModel();
+	inline const Model* GetModel() const { return model; }
+	void LoadModel(char* file);
+
 private:
 	unsigned vbo_id = 0;
 	unsigned texture = 0;

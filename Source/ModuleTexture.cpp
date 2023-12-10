@@ -44,53 +44,24 @@ update_status ModuleTexture::PostUpdate()
 // Called before quitting
 bool ModuleTexture::CleanUp()
 {
-    if (texture != 0) {
-        glDeleteTextures(1, &texture);
-        texture = 0;
-    }
-
 	return true;
 }
 
-void ModuleTexture::GetImageFormat() {
-	switch (metadata.format)
-	{
-	case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-	case DXGI_FORMAT_R8G8B8A8_UNORM:
-		internalFormat = GL_RGBA8;
-		format = GL_RGBA;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-	case DXGI_FORMAT_B8G8R8A8_UNORM:
-		internalFormat = GL_RGBA8;
-		format = GL_BGRA;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case DXGI_FORMAT_B5G6R5_UNORM:
-		internalFormat = GL_RGB8;
-		format = GL_BGR;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	default:
-		assert(false && "Unsupported format");
-	}
-}
+bool ModuleTexture::LoadTextureData(DirectX::ScratchImage& image, const std::string& fileDir)
+{
 
-bool ModuleTexture::LoadTextureData(const std::string& fileDir) {
-    
     std::wstring filename = std::wstring(fileDir.begin(), fileDir.end());
     
     // Try loading DDS
-    HRESULT hr = DirectX::LoadFromDDSFile(filename.c_str(), DirectX::DDS_FLAGS_NONE, &metadata, image);
+    HRESULT hr = DirectX::LoadFromDDSFile(filename.c_str(), DirectX::DDS_FLAGS_NONE, nullptr, image);
 
     if (FAILED(hr)) {
         // Try loading TGA if DDS fails
-        hr = DirectX::LoadFromTGAFile(filename.c_str(), &metadata, image);
+        hr = DirectX::LoadFromTGAFile(filename.c_str(), nullptr, image);
 
         if (FAILED(hr)) {
             // Try loading using WIC if TGA also fails
-            hr = DirectX::LoadFromWICFile(filename.c_str(), DirectX::WIC_FLAGS_NONE, &metadata, image);
+            hr = DirectX::LoadFromWICFile(filename.c_str(), DirectX::WIC_FLAGS_NONE, nullptr, image);
 
             if (FAILED(hr)) {
                 LOG("Material convertor error: texture loading failed (%s)", fileDir.c_str());
@@ -112,35 +83,64 @@ bool ModuleTexture::LoadTextureData(const std::string& fileDir) {
     }
 }
 
-bool ModuleTexture::LoadTexture(const std::string& fileDir) {
-    bool loaded = LoadTextureData(fileDir);
+unsigned ModuleTexture::LoadTexture(DirectX::ScratchImage* image) {
+    CleanUp(); // Clean up existing texture data
 
-    if (!loaded) return false;
+    DirectX::TexMetadata metadata = image->GetMetadata();
+    unsigned texture = 0;
 
-    GetImageFormat();
+    int format = 0;
+    int internalFormat = 0;
+    int type = 0;
 
-    // Flip the image vertically (if needed)
-    DirectX::ScratchImage flippedImage;
-    DirectX::FlipRotate(image.GetImages(), image.GetImageCount(), image.GetMetadata(), DirectX::TEX_FR_FLIP_VERTICAL, flippedImage);
+    switch (metadata.format)
+    {
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+        internalFormat = GL_RGBA8;
+        format = GL_RGBA;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+        internalFormat = GL_RGBA8;
+        format = GL_BGRA;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    case DXGI_FORMAT_B5G6R5_UNORM:
+        internalFormat = GL_RGB8;
+        format = GL_BGR;
+        type = GL_UNSIGNED_BYTE;
+        break;
+    default:
+        assert(false && "Unsupported format");
+    }
 
     glEnable(GL_TEXTURE_2D);
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    // Set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
     // Upload texture data to the GPU
-    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, static_cast<GLsizei>(flippedImage.GetMetadata().width),
-        static_cast<GLsizei>(flippedImage.GetMetadata().height), 0, format, type, flippedImage.GetPixels());
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, static_cast<GLsizei>(image->GetMetadata().width),
+        static_cast<GLsizei>(image->GetMetadata().height), 0, format, type, image->GetPixels());
 
     // Generate mipmaps
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (metadata.mipLevels > -1) {
+        for (size_t i = 0; i < metadata.mipLevels; ++i) {
+            const DirectX::Image* mip = image->GetImage(i, 0, 0);
+            glTexImage2D(GL_TEXTURE_2D, i, internalFormat, mip->width, mip->height, 0, format, type, mip->pixels);
+        }
+    }
+    else {
+        glGenerateMipmap(texture);
+    }
+    
+    // Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, metadata.mipLevels - 1);
 
     return true;
 }
 
-GLuint ModuleTexture::GetTexture() {
-    return texture;
-}

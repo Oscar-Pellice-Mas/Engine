@@ -5,14 +5,9 @@
 #include <GL/glew.h>
 #include "SDL.h"
 
-ModuleOpenGL::ModuleOpenGL()
-{
+ModuleOpenGL::ModuleOpenGL() = default;
 
-}
-
-ModuleOpenGL::~ModuleOpenGL()
-{
-}
+ModuleOpenGL::~ModuleOpenGL() = default;
 
 void __stdcall OurOpenGLErrorFunction(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
 
@@ -21,38 +16,39 @@ bool ModuleOpenGL::Init()
 {
 	LOG("Creating Renderer context");
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4); // desired version
+	// Set OpenGL context attributes
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1); // we want a double buffer
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24); // we want to have a depth buffer with 24 bits
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8); // we want to have a stencil buffer with 8 bits
-
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
 
+	// Create OpenGL context
 	context = SDL_GL_CreateContext(App->GetWindow()->GetWindow());
 	if (!context) {
-		// Handle error
 		LOG("Error creating OpenGL context: %s", SDL_GetError());
 		return false;
 	}
 
+	// Initialize GLEW
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
-		// Handle error
 		LOG("Error initializing GLEW: %s", glewGetErrorString(err));
 		return false;
 	}
+
 	LOG("Using Glew %s", glewGetString(GLEW_VERSION));
 	LOG("Vendor: %s", glGetString(GL_VENDOR));
 	LOG("Renderer: %s", glGetString(GL_RENDERER));
 	LOG("OpenGL version supported %s", glGetString(GL_VERSION));
 	LOG("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	glEnable(GL_DEPTH_TEST); // Enable depth test
-	glEnable(GL_CULL_FACE); // Enable cull backward faces
-	glFrontFace(GL_CCW); // Front faces will be counter clockwise
+	// Enable depth test and cull face
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glFrontFace(GL_CCW);
 
 #ifdef _DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
@@ -66,7 +62,9 @@ bool ModuleOpenGL::Init()
 
 update_status ModuleOpenGL::PreUpdate()
 {
-	SDL_GetWindowSize(App->GetWindow()->GetWindow(), &w,	&h);
+	int w = App->GetWindow()->GetScreenWidth();
+	int h = App->GetWindow()->GetScreenHeight();
+	SDL_GetWindowSize(App->GetWindow()->GetWindow(), &w, &h);
 	glViewport(0, 0, w, h);
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -99,12 +97,6 @@ bool ModuleOpenGL::CleanUp()
 	return true;
 }
 
-void ModuleOpenGL::WindowResized(unsigned width, unsigned height)
-{
-	w = width;
-	h = height;
-}
-
 void __stdcall OurOpenGLErrorFunction(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
 	const char* tmp_source = "", * tmp_type = "", * tmp_severity = "";
@@ -134,12 +126,4 @@ void __stdcall OurOpenGLErrorFunction(GLenum source, GLenum type, GLuint id, GLe
 	case GL_DEBUG_SEVERITY_NOTIFICATION: tmp_severity = "notification"; break;
 	};
 	LOG("<Source:%s> <Type:%s> <Severity:%s> <ID:%d> <Message:%s>\n", tmp_source, tmp_type, tmp_severity, id, message);
-}
-
-int ModuleOpenGL::getHeight() {
-	return h;
-}
-
-int ModuleOpenGL::getWidth() {
-	return w;
 }

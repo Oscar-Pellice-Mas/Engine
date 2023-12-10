@@ -1,6 +1,7 @@
 #pragma once
 
 #include<list>
+#include<vector>
 #include "Globals.h"
 #include "Module.h"
 
@@ -35,6 +36,10 @@ public:
     ModuleCamera* GetCamera() { return camera; }
     ModuleTexture* GetTexture() { return texture; }
     ModuleExercice* GetExercice() { return exercice; }
+    ModuleEditor* GetEditor() { return editor; }
+
+    const std::vector<float>* const GetFrameRate() { return &frameRate; };
+    const std::vector<float>* const GetMilliseconds() { return &milliSeconds; };
 
 private:
 
@@ -49,6 +54,10 @@ private:
     ModuleExercice* exercice = nullptr;
 
     std::list<Module*> modules;
+
+    std::vector<float> frameRate;
+    std::vector<float> milliSeconds;
+    int vectorIndex = 0;
 
 };
 

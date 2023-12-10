@@ -5,6 +5,7 @@
 #include "Globals.h"
 
 typedef unsigned __int8 Uint8;
+class Model;
 
 class ModuleInput : public Module
 {
@@ -18,7 +19,8 @@ public:
 	bool CleanUp();
 
 private:
-	const Uint8 *keyboard = NULL;
+	const Uint8 *keyboard = nullptr;
+	const Model* model = nullptr;
 };
 
 #endif /*_MODULE_INPUT_H_*/

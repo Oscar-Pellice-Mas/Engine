@@ -14,41 +14,35 @@ ModuleWindow::~ModuleWindow()
 bool ModuleWindow::Init()
 {
 	LOG("Init SDL window & surface");
-	bool ret = true;
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0)
 	{
 		LOG("SDL_VIDEO could not initialize! SDL_Error: %s\n", SDL_GetError());
-		ret = false;
+		return false;
 	}
-	else
+
+	//Create window
+	screenWidth = SCREEN_WIDTH;
+	screenHeight = SCREEN_HEIGHT;
+	Uint32 flags = SDL_WINDOW_SHOWN |  SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+
+	if(FULLSCREEN)
 	{
-		//Create window
-		int width = SCREEN_WIDTH;
-		int height = SCREEN_HEIGHT;
-		Uint32 flags = SDL_WINDOW_SHOWN |  SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
-
-		if(FULLSCREEN == true)
-		{
-			flags |= SDL_WINDOW_FULLSCREEN;
-		}
-
-		window = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags);
-
-		if(window == NULL)
-		{
-			LOG("Window could not be created! SDL_Error: %s\n", SDL_GetError());
-			ret = false;
-		}
-		else
-		{
-			//Get window surface
-			
-			screen_surface = SDL_GetWindowSurface(window);
-		}
+		flags |= SDL_WINDOW_FULLSCREEN;
 	}
 
-	return ret;
+	window = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, screenWidth, screenHeight, flags);
+
+	if(window == nullptr)
+	{
+		LOG("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+		return false;
+	}
+
+	//Get window surface
+	screen_surface = SDL_GetWindowSurface(window);
+
+	return true;
 }
 
 // Called before quitting
@@ -57,9 +51,10 @@ bool ModuleWindow::CleanUp()
 	LOG("Destroying SDL window and quitting all SDL systems");
 
 	//Destroy window
-	if(window != NULL)
+	if(window)
 	{
 		SDL_DestroyWindow(window);
+		window = nullptr;
 	}
 
 	//Quit SDL subsystems
@@ -67,15 +62,17 @@ bool ModuleWindow::CleanUp()
 	return true;
 }
 
-void ModuleWindow::SetFullScreen(bool fullScreen) {
-	fullScreen ? SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP) : SDL_SetWindowFullscreen(window, 0);
+void ModuleWindow::SetFullScreen(bool fullScreen)
+{
+	SDL_SetWindowFullscreen(window, fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
-void ModuleWindow::SetResizable(bool resizable) {
-	resizable ? SDL_SetWindowResizable(window, SDL_TRUE) : SDL_SetWindowResizable(window, SDL_FALSE);
+void ModuleWindow::SetResizable(bool resizable)
+{
+	SDL_SetWindowResizable(window, resizable ? SDL_TRUE : SDL_FALSE);
 }
 
-void ModuleWindow::SetScreenSize(float height, float width) {
+void ModuleWindow::SetScreenSize(int width, int height) {
 	screenHeight = height;
 	screenWidth = width;
 }

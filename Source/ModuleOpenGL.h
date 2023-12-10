@@ -16,13 +16,9 @@ public:
 	update_status PostUpdate();
 	bool CleanUp();
 
-	void WindowResized(unsigned width, unsigned height);
-	int getHeight();
-	int getWidth();
-
 	void* context = nullptr;
 
 private:
-	int h = 0, w = 0;
+
 };
 #endif /*_MODULE_OPENGL_*/

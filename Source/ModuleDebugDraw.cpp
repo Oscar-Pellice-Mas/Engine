@@ -600,7 +600,7 @@ bool ModuleDebugDraw::Init()
 update_status  ModuleDebugDraw::Update()
 {
     dd::axisTriad(float4x4::identity, 0.1f, 1.0f);
-    dd::xzSquareGrid(-10, 10, 0.0f, 1.0f, dd::colors::Gray);
+    dd::xzSquareGrid(-100, 100, 0.0f, 1.0f, dd::colors::Gray);
 
 	return UPDATE_CONTINUE;
 }

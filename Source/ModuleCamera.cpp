@@ -2,6 +2,8 @@
 #include "Application.h"
 
 #include "ModuleCamera.h"
+#include "Model.h"
+#include "ModuleWindow.h"
 
 #include "SDL.h"
 #include <GL/glew.h>
@@ -20,43 +22,29 @@ ModuleCamera::~ModuleCamera()
 // Called before render is available
 bool ModuleCamera::Init()
 {
-    /*frustum->pos = float3(0.0f, 1.0f, 5.0f);;
-    frustum->front = -float3::unitZ;
-    frustum->up = float3::unitY;
+    // Retrieve model view and projection
     frustum->type = FrustumType::PerspectiveFrustum;
-    frustum->nearPlaneDistance = 0.1f;
-    frustum->farPlaneDistance = 100.0f;
+    frustum->pos = position;
+    frustum->front = front;
+    frustum->up = up;
+    frustum->nearPlaneDistance = 0.01f;
+    frustum->farPlaneDistance = 1000.0f;
     frustum->verticalFov = math::pi / 4.0f;
-    frustum->horizontalFov = 2.f * atanf(tanf(frustum->verticalFov * 0.5f)) * 1.3f;*/
+    frustum->horizontalFov = 2.f * atanf(tanf(frustum->verticalFov * 0.5f) * (App->GetWindow()->GetScreenWidth() / App->GetWindow()->GetScreenHeight()));
 
 	return true;
 }
 
 update_status ModuleCamera::PreUpdate()
 {
-	// Retrieve model view and projection
-	frustum->type = FrustumType::PerspectiveFrustum;
+    frustum->type = FrustumType::PerspectiveFrustum;
     frustum->pos = position;
     frustum->front = front;
-	frustum->up = up;
-	frustum->nearPlaneDistance = 0.1f;
-	frustum->farPlaneDistance = 100.0f;
-	frustum->verticalFov = math::pi / 4.0f;
-	frustum->horizontalFov = 2.f * atanf(tanf(frustum->verticalFov * 0.5f)) * 1.3f;
-
-    float4x4 proj = frustum->ProjectionMatrix();
-
-    float4x4 model = float4x4::identity;
-	/*model = float4x4::FromTRS(float3(2.0f, 0.0f, 0.0f),
-		float4x4::RotateZ(pi / 4.0f),
-		float3(2.0f, 1.0f, 1.0f));*/
-
-    float4x4 view = frustum->ViewMatrix();
-	//view = float4x4::LookAt(float3(0.0f, 4.0f, 8.0f), float3(0.0f, 0.0f, 0.0f), float3::unitY, frustum.up);
-
-	//glUniformMatrix4fv(0, 1, GL_TRUE, &model[0][0]);
-	//glUniformMatrix4fv(1, 1, GL_TRUE, &view[0][0]);
-	//glUniformMatrix4fv(2, 1, GL_TRUE, &proj[0][0]);
+    frustum->up = up;
+    frustum->nearPlaneDistance = 0.01f;
+    frustum->farPlaneDistance = 1000.0f;
+    //frustum->verticalFov = math::pi / 4.0f;
+    frustum->horizontalFov = 2.f * atanf(tanf(frustum->verticalFov * 0.5f) * (App->GetWindow()->GetScreenWidth() / App->GetWindow()->GetScreenHeight()));
 
 	return UPDATE_CONTINUE;
 }
@@ -66,7 +54,7 @@ update_status ModuleCamera::Update()
 {
     static Uint32 lastFrameTime = SDL_GetTicks();
     Uint32 currentFrameTime = SDL_GetTicks();
-    float deltaTime = (currentFrameTime - lastFrameTime) / 1000.0f; // Convert to seconds
+    float deltaTime = (currentFrameTime - lastFrameTime) / 1000.0f; 
     lastFrameTime = currentFrameTime;
 
     UpdatePosition(deltaTime);
@@ -161,6 +149,27 @@ void ModuleCamera::HandleKeyboardInput(const SDL_KeyboardEvent& keyEvent)
             rotateYawRight = false;
         break;
 
+    case SDLK_LCTRL:
+        if (keyEvent.type == SDL_KEYDOWN)
+            speedDecrease = true;
+        else if (keyEvent.type == SDL_KEYUP)
+            speedDecrease = false;
+        break;
+
+    case SDLK_LSHIFT:
+        if (keyEvent.type == SDL_KEYDOWN)
+            speedIncrease = true;
+        else if (keyEvent.type == SDL_KEYUP)
+            speedIncrease = false;
+        break;
+
+    case SDLK_f:
+        if (keyEvent.type == SDL_KEYDOWN)
+            lookAtCenter = true;
+        else if (keyEvent.type == SDL_KEYUP)
+            lookAtCenter = false;
+        break;
+
     default:
         // Handle other keys if needed
         break;
@@ -168,18 +177,20 @@ void ModuleCamera::HandleKeyboardInput(const SDL_KeyboardEvent& keyEvent)
 }
 
 void ModuleCamera::UpdatePosition(float deltaTime) {
-    float speed = 5.0f; // Adjust the speed as needed
+    //speed = 5.0f;
 
     // Adjust speed based on delta time
     float adjustedSpeed = speed * deltaTime;
+    if (speedIncrease) adjustedSpeed *= 2;
+    if (speedDecrease) adjustedSpeed /= 2;
 
     // Update position based on the state of movement directions
     position += (moveUp ? float3(0.0f, adjustedSpeed, 0.0f) : float3(0.0f, 0.0f, 0.0f))
-        - (moveDown ? float3(0.0f, adjustedSpeed, 0.0f) : float3(0.0f, 0.0f, 0.0f))
-        + (moveForward ? adjustedSpeed * frustum->front : float3(0.0f, 0.0f, 0.0f))
-        - (moveBackward ? adjustedSpeed * frustum->front : float3(0.0f, 0.0f, 0.0f))
-        - (moveLeft ? adjustedSpeed * frustum->WorldRight() : float3(0.0f, 0.0f, 0.0f))
-        + (moveRight ? adjustedSpeed * frustum->WorldRight() : float3(0.0f, 0.0f, 0.0f));
+    - (moveDown ? float3(0.0f, adjustedSpeed, 0.0f) : float3(0.0f, 0.0f, 0.0f))
+    + (moveForward ? adjustedSpeed * frustum->front : float3(0.0f, 0.0f, 0.0f))
+    - (moveBackward ? adjustedSpeed * frustum->front : float3(0.0f, 0.0f, 0.0f))
+    - (moveLeft ? adjustedSpeed * frustum->WorldRight() : float3(0.0f, 0.0f, 0.0f))
+    + (moveRight ? adjustedSpeed * frustum->WorldRight() : float3(0.0f, 0.0f, 0.0f));
     
     // Rotate based on the state of rotation directions
     if (rotatePitchUp)
@@ -218,17 +229,38 @@ void ModuleCamera::HandleMouseMotion(const SDL_MouseMotionEvent& motionEvent)
     {
         int deltaX = motionEvent.x - lastMouseX;
         int deltaY = motionEvent.y - lastMouseY;
-
-        const float sensitivity = 0.01f;
+        
         if (deltaX != 0) {
-            RotateYaw(-deltaX * sensitivity);
+            float angle = -deltaX * sensitivity;
+            RotateYaw(angle);
         }
         if (deltaY != 0) {
-            RotatePitch(-deltaY * sensitivity);
+            float angle = -deltaY * sensitivity;
+            RotatePitch(angle);
         }
 
         lastMouseX = motionEvent.x;
         lastMouseY = motionEvent.y;
+
+        if (lookAtCenter)
+        {
+            // Orbit around the center point
+            float3 orbitAxis = float3(0.0f, 1.0f, 0.0f); // You can change the orbit axis as needed
+            Quat rotationYaw = Quat::RotateAxisAngle(orbitAxis, deltaX * sensitivity);
+            Quat rotationPitch = Quat::RotateAxisAngle(frustum->WorldRight(), deltaY * sensitivity);
+
+            // Calculate the vector from the center to the camera
+            float3 toCamera = position - float3::zero;
+
+            // Rotate the position around the orbit axis
+            float3 rotatedPosition = rotationYaw * rotationPitch * toCamera;
+
+            // Set the new position relative to the center
+            position = float3::zero + rotatedPosition;
+
+            // Ensure the camera looks at the center
+            LookAt(float3::zero);
+        }
     }
 }
 
@@ -246,4 +278,35 @@ void ModuleCamera::HandleMouseButton(const SDL_MouseButtonEvent& buttonEvent)
             isMouseDragging = false;
         }
     }
+}
+
+void ModuleCamera::HandleMouseWheel(const SDL_MouseWheelEvent& wheelEvent)
+{
+    if (wheelEvent.y > 0) // Scrolling up
+    {
+        // Zoom in
+        frustum->verticalFov -= zoomSpeed;
+        frustum->verticalFov = math::Clamp(frustum->verticalFov, 0.1f, math::pi - 0.1f);
+    }
+    else if (wheelEvent.y < 0) // Scrolling down
+    {
+        // Zoom out
+        frustum->verticalFov += zoomSpeed;
+        frustum->verticalFov = math::Clamp(frustum->verticalFov, 0.1f, math::pi - 0.1f);
+    }
+}
+
+void ModuleCamera::LookAt(const float3& target_pos)
+{
+    // Calculate new front vector
+    front = (target_pos - position).Normalized();
+
+    // Assume up vector is initially (0, 1, 0)
+    float3 worldUp(0.0f, 1.0f, 0.0f);
+
+    // Calculate new right vector
+    float3 right = worldUp.Cross(front).Normalized();
+
+    // Calculate new up vector
+    up = front.Cross(right).Normalized();
 }

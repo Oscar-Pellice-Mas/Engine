@@ -7,9 +7,11 @@
 #include "SDL.h"
 #include <GL/glew.h>
 #include "MathGeoLib.h"
+#include "Geometry/AABB.h"
 
 Mesh::Mesh()
 {
+	meshAABB = new AABB();
 
 }
 
@@ -20,10 +22,12 @@ Mesh::~Mesh()
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
 	glDeleteVertexArrays(1, &vao);
+	delete meshAABB;
 }
 
 void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive)
 {
+	name = mesh.name;
 	// Initialize variables for vertex buffer size and offsets
 	size_t bufferSize = 0;
 	size_t posByteOffset = 0, posByteStride = 0, texByteOffset = 0, texByteStride = 0;
@@ -65,7 +69,7 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 		// Generate and bind the vertex buffer
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, bufferSize *= posAcc.count, nullptr, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, bufferSize * vertexCount, nullptr, GL_STATIC_DRAW);
 
 		// Map the buffer and copy data from the glTF model
 		float3* ptr = reinterpret_cast<float3*>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
@@ -80,6 +84,15 @@ void Mesh::LoadVBO(const tinygltf::Model& model, const tinygltf::Mesh& mesh, con
 			}
 
 		}
+
+		meshAABB->SetFrom(ptr, vertexCount);
+		Sphere sphere = meshAABB->MinimalEnclosingSphere();
+		Frustum* frustum = App->GetCamera()->frustum;
+		float3 pos = sphere.Centroid() + float3(sphere.Diameter());
+		App->GetCamera()->SetPosition(pos);
+		App->GetCamera()->LookAt(float3::zero);
+		App->GetCamera()->SetSpeed(sphere.r);
+
 		glUnmapBuffer(GL_ARRAY_BUFFER);
 	}
 
@@ -191,13 +204,13 @@ void Mesh::CreateVAO()
 
 	// Enable and set up vertex attribute pointers for position, texture coordinates, and normals
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
 
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float) * 3 * vertexCount));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)(sizeof(float) * 3 * vertexCount));
 
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(float) * 5 * vertexCount));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)(sizeof(float) * 5 * vertexCount));
 
 	glBindVertexArray(0);
 }
@@ -208,12 +221,23 @@ void Mesh::Draw(const std::vector<unsigned>& textures)
 	program = App->GetProgram()->program;
 	glUseProgram(program);
 
+	// Cache uniform locations
+	static GLint diffuseLocation = glGetUniformLocation(program, "diffuse");
+
 	// Activate a texture unit and bind the texture
 	glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, textures[material]);
-	glUniform1i(glGetUniformLocation(program, "diffuse"), 0);
+	glUniform1i(diffuseLocation, 0);
 
 	// Bind the Vertex Array Object and draw the mesh using the element buffer
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+}
+
+void Mesh::DestroyBuffers() {
+	glDeleteBuffers(1, &vbo);
+	if (indexCount != 0) {
+		glDeleteBuffers(1, &ebo);
+		glDeleteBuffers(1, &vao);
+	}
 }

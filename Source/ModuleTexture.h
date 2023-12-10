@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _MODULE_TEXTURE_H_
 #define _MODULE_TEXTURE_H_
 
@@ -6,7 +5,12 @@
 #include "Globals.h"
 
 #include "MathGeoLib.h" //only for string
-#include "DirectXTex.h"
+//#include "DirectXTex.h"
+
+namespace DirectX
+{
+	class ScratchImage;
+}
 
 class ModuleTexture : public Module
 {
@@ -20,21 +24,9 @@ public:
 	update_status PostUpdate();
 	bool CleanUp();
 	
-	bool LoadTexture(const std::string& fileDir);
-	unsigned GetTexture();
-
+	unsigned LoadTexture(DirectX::ScratchImage* img);
+	bool LoadTextureData(DirectX::ScratchImage& image, const std::string& fileDir);
 private:
-
-	DirectX::TexMetadata metadata;
-	DirectX::ScratchImage image;
-	unsigned texture = 0;
-
-	int format = 0;
-	int internalFormat = 0;
-	int type = 0;
-
-	void GetImageFormat();
-	bool LoadTextureData(const std::string& fileDir);
 
 };
 #endif /*_MODULE_TEXTURE_H_*/

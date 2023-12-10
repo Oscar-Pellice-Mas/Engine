@@ -6,6 +6,7 @@
 #include "MathGeoLib/include/Math/float3.h"
 #include "SDL/include/SDL.h"
 
+class Model;
 
 class ModuleCamera : public Module
 {
@@ -22,6 +23,18 @@ public:
 	void HandleKeyboardInput(const SDL_KeyboardEvent& keyEvent);
 	void HandleMouseMotion(const SDL_MouseMotionEvent& motionEvent);
 	void HandleMouseButton(const SDL_MouseButtonEvent& buttonEvent);
+	void HandleMouseWheel(const SDL_MouseWheelEvent& wheelEvent);
+	
+	void SetPosition(float3 pos) { position = pos; }
+	void LookAt(const float3& target_pos);
+
+	void SetSpeed(float spd) { speed = spd; }
+	void SetSensitivity(float sens) { sensitivity = sens; }
+	void SetZoomSpeed(float speed) { zoomSpeed = speed; }
+
+	float GetSpeed() { return speed; }
+	float GetSensitivity() { return sensitivity; }
+	float GetZoomSpeed() { return zoomSpeed; }
 
 	Frustum* frustum = nullptr;
 
@@ -40,6 +53,11 @@ private:
 	bool rotatePitchDown = false;
 	bool rotateYawLeft = false;
 	bool rotateYawRight = false;
+	bool speedIncrease = false;
+	bool speedDecrease = false;
+	bool lookAtCenter = false;
+
+	float orbitalSpeed = 0.1f;
 
 	float3 position = float3(0.0f, 1.0f, 5.0f);
 	float3 front = -float3::unitZ;
@@ -48,5 +66,9 @@ private:
 	int lastMouseX = 0;
 	int lastMouseY = 0;
 	bool isMouseDragging = false;
+
+	float speed = 5.0f; 
+	float sensitivity = 0.01f;
+	float zoomSpeed = 0.1f;
 };
 #endif /*_MODULE_CAMERA_H_*/

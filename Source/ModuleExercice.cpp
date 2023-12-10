@@ -11,6 +11,7 @@
 
 #include "SDL.h"
 #include <GL/glew.h>
+#include "MathGeoLib.h" 
 
 
 ModuleExercice::ModuleExercice()
@@ -37,7 +38,9 @@ bool ModuleExercice::Init()
 
 
 
-	model->Load("Models/BakerHouse/BakerHouse.gltf");
+	//model->Load("./Models/Avocado/Avocado.gltf");
+	model->Load("./Models/BakerHouse/BakerHouse.gltf");
+	//model->Load("./Models/Duck/Duck.gltf");
 
 	return true;
 }
@@ -52,8 +55,7 @@ update_status ModuleExercice::PreUpdate()
 update_status ModuleExercice::Update()
 {
 	float4x4 model_matrix, view_matrix, proj_matrix;
-	//model_matrix = float4x4::FromTRS(float3::zero, float4x4::RotateZ(0), float3::one);
-	model_matrix = float4x4::FromTRS(float3::zero, float4x4::RotateZ(0), float3(40,40,40));
+	model_matrix = float4x4::FromTRS(float3::zero, float4x4::RotateZ(0), float3::one);
 	view_matrix = App->GetCamera()->frustum->ViewMatrix();
 	proj_matrix = App->GetCamera()->frustum->ProjectionMatrix();
 
@@ -81,7 +83,13 @@ bool ModuleExercice::CleanUp()
 	return true;
 }
 
+void ModuleExercice::LoadModel(char* file) {
+	model->Load(file);
+}
 
+void ModuleExercice::ClearModel() {
+	model->Clear();
+}
 
 /*
 unsigned CreateTriangleVBO();

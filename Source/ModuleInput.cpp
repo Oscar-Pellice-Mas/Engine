@@ -2,7 +2,9 @@
 #include "Application.h"
 #include "ModuleInput.h"
 #include "ModuleOpenGL.h"
+#include "ModuleWindow.h"
 #include "ModuleCamera.h"
+#include "ModuleExercice.h"
 #include "SDL/include/SDL.h"
 #include "ImGui\imgui-1.89.9-docking\imgui_impl_sdl2.h"
 
@@ -45,7 +47,7 @@ update_status ModuleInput::Update()
 
             case SDL_WINDOWEVENT:
                 if (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED || sdlEvent.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
-                    App->GetOpenGL()->WindowResized(sdlEvent.window.data1, sdlEvent.window.data2);
+                    App->GetWindow()->SetScreenSize(sdlEvent.window.data1, sdlEvent.window.data2);
                 if (sdlEvent.window.event == SDL_WINDOWEVENT_CLOSE) {
                     return UPDATE_STOP;
                 }
@@ -60,9 +62,19 @@ update_status ModuleInput::Update()
                 App->GetCamera()->HandleMouseMotion(sdlEvent.motion);
                 break;
 
+            case SDL_MOUSEWHEEL:
+                App->GetCamera()->HandleMouseWheel(sdlEvent.wheel);
+                break;
+
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP:
                 App->GetCamera()->HandleMouseButton(sdlEvent.button);
+                break; 
+
+            case SDL_DROPFILE:
+                LOG("FILE DROPPED: %s", sdlEvent.drop.file);
+                App->GetExercice()->ClearModel();
+                App->GetExercice()->LoadModel(sdlEvent.drop.file);
                 break;
 
             default:
